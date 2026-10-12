@@ -86,8 +86,8 @@
                 { title: "速度計算v2.9.1", url: "https://wuchihfeng.github.io/trainspeed2.9/" },
                 { title: "臺鐵45天內加班車資訊", url: "https://wuchihfeng.github.io/tdx-extra-train-automatic-filtering/" },
                 { title: "加速度積分 與 GPS測速器", url: "https://wuchihfeng.github.io/Acceleration-sensor/" },
-                { title: "加速度積分 與 GPS測速器 longhorn", url: "https://wuchihfeng.github.io/Acceleration-sensor-longhorn/" }
-                { title: "加速度積分 與 GPS測速器 whistler", url:"https://wuchihfeng.github.io/Acceleration-senser-whistler/" }
+                { title: "加速度積分 與 GPS測速器 longhorn", url: "https://wuchihfeng.github.io/Acceleration-sensor-longhorn/" }, // 修正：此處補上逗號
+                { title: "加速度積分 與 GPS測速器 whistler", url: "https://wuchihfeng.github.io/Acceleration-senser-whistler/" }
             ]
         };
 
@@ -119,12 +119,10 @@
                 titleLink.className = 'font-semibold text-neutral-100 group-hover:text-orange-400 transition text-center flex-grow text-sm sm:text-base';
                 titleLink.textContent = escapeHtml(link.title);
 
-                // 建立右側的複製按鈕 (取代原本的 fa-ellipsis-vertical)
-                // 將 SVG 內嵌進來以方便控制顏色與大小
+                // 建立右側的複製按鈕
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'text-neutral-500 hover:text-orange-400 p-1 text-sm transition w-6 flex justify-end items-center';
                 copyBtn.title = '複製連結';
-                // 這是從 image_4.png 提取的複製圖示 SVG
                 copyBtn.innerHTML = `
                     <svg class="copy-icon" viewBox="0 0 256 256">
                         <path d="M216,32H88a8,8,0,0,0-8,8V82.34a8,8,0,0,0,16,0V48h112V160H173.66a8,8,0,0,0,0,16H216a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,88V216a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V88a8,8,0,0,1,8-8H152A8,8,0,0,1,160,88Zm-16,8H48V200H144Z"/>
@@ -150,7 +148,11 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#039;');
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
         }
 
         // 為了保持 API 一致性保留此函數
@@ -167,6 +169,18 @@
         });
 
         function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('網址已複製到剪貼簿！');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);
