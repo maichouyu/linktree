@@ -36,38 +36,80 @@
             height: 1em;
             fill: currentColor;
         }
+        .link-btn a:focus-visible,
+        .link-btn button:focus-visible,
+        #shareBtn:focus-visible {
+            outline: 2px solid #f97316;
+            outline-offset: 2px;
+            border-radius: 9999px;
+        }
+
+        /* ===== 電腦版版面（≥1024px）；手機版維持原樣 ===== */
+        @media (min-width: 1024px) {
+            body {
+                background-image: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(249, 115, 22, 0.12), transparent 70%);
+                background-repeat: no-repeat;
+            }
+            .link-btn {
+                border-radius: 1rem;
+                min-height: 5rem;
+            }
+            .link-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.35);
+            }
+            /* 整張卡片都可點擊（複製鈕浮在上層） */
+            .link-btn a::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+            }
+            .link-btn button {
+                position: relative;
+                z-index: 10;
+            }
+            .link-btn a:focus-visible,
+            .link-btn button:focus-visible {
+                border-radius: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between selection:bg-orange-500 selection:text-black">
 
     <!-- 頂部導航：只保留分享按鈕 -->
-    <header class="w-full max-w-md mx-auto p-4 flex justify-end items-center">
+    <header class="w-full max-w-md lg:max-w-5xl mx-auto p-4 lg:px-6 lg:pt-8 flex justify-end items-center">
         <button id="shareBtn" class="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center hover:bg-neutral-800 transition text-neutral-300 shadow-md" title="分享頁面">
             <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
         </button>
     </header>
 
-    <main class="w-full max-w-md mx-auto px-6 py-4 flex-grow flex flex-col items-center">
-        <!-- 大頭貼容器 -->
-        <div class="relative mb-4">
-            <div class="w-28 h-28 rounded-full overflow-hidden bg-neutral-800 flex items-center justify-center shadow-lg">
-                <img id="profileAvatar" src="avatar.jpg" alt="大頭貼" class="w-full h-full object-cover">
+    <main class="w-full max-w-md lg:max-w-5xl mx-auto px-6 py-4 flex-grow flex flex-col items-center lg:flex-row lg:items-start lg:gap-16 lg:pt-8">
+        <!-- 個人資料區（電腦版固定在左側） -->
+        <section class="flex flex-col items-center lg:w-72 lg:shrink-0 lg:sticky lg:top-12">
+            <!-- 大頭貼容器 -->
+            <div class="relative mb-4">
+                <div class="w-28 h-28 lg:w-44 lg:h-44 rounded-full overflow-hidden bg-neutral-800 flex items-center justify-center shadow-lg lg:ring-2 lg:ring-orange-500/30 lg:ring-offset-4 lg:ring-offset-black">
+                    <img id="profileAvatar" src="avatar.jpg" alt="大頭貼" class="w-full h-full object-cover">
+                </div>
             </div>
-        </div>
 
-        <!-- 標題名稱 -->
-        <h1 id="profileTitle" class="text-xl font-bold tracking-wider text-orange-500 mb-8 text-center">
-            載入中...
-        </h1>
+            <!-- 標題名稱 -->
+            <h1 id="profileTitle" class="text-xl lg:text-3xl font-bold tracking-wider text-orange-500 mb-8 lg:mb-2 text-center">
+                載入中...
+            </h1>
+            <p id="profileMeta" class="hidden lg:block text-sm text-neutral-500 tracking-wide"></p>
+        </section>
 
-        <!-- 連結按鈕列表 -->
-        <div id="linksContainer" class="w-full flex flex-col gap-3.5">
+        <!-- 連結按鈕列表（電腦版為雙欄卡片） -->
+        <section id="linksContainer" class="w-full flex flex-col gap-3.5 lg:grid lg:grid-cols-2 lg:gap-4 lg:flex-1">
             <!-- 動態插入連結，結構已調整 -->
-        </div>
+        </section>
     </main>
 
     <!-- 底部：保持乾淨 -->
-    <footer class="w-full max-w-md mx-auto py-4 px-4"></footer>
+    <footer class="w-full max-w-md lg:max-w-5xl mx-auto py-4 lg:py-8 px-4"></footer>
 
     <!-- 複製成功提示 Toast -->
     <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-neutral-800 text-white px-4 py-2 rounded-xl shadow-lg border border-neutral-700 text-sm opacity-0 pointer-events-none transition-opacity duration-300 z-50">
@@ -92,6 +134,7 @@
         };
 
         const profileTitle = document.getElementById('profileTitle');
+        const profileMeta = document.getElementById('profileMeta');
         const profileAvatar = document.getElementById('profileAvatar');
         const linksContainer = document.getElementById('linksContainer');
         const shareBtn = document.getElementById('shareBtn');
@@ -99,13 +142,19 @@
 
         function renderApp() {
             profileTitle.textContent = pageData.title;
+            profileMeta.textContent = `${pageData.links.length} 個專案`;
             profileAvatar.src = pageData.avatar;
             linksContainer.innerHTML = '';
 
-            pageData.links.forEach((link) => {
+            pageData.links.forEach((link, index) => {
                 // 建立外層容器 (取代原本的 <a>)
                 const container = document.createElement('div');
-                container.className = 'link-btn w-full py-4 px-5 flex items-center justify-between shadow-lg group relative';
+                container.className = 'link-btn w-full py-4 px-5 lg:py-5 lg:px-6 flex items-center justify-between shadow-lg group relative';
+
+                // 電腦版專用的序號
+                const indexLabel = document.createElement('span');
+                indexLabel.className = 'hidden lg:block text-orange-500/50 font-mono text-sm mr-4 select-none';
+                indexLabel.textContent = String(index + 1).padStart(2, '0');
                 
                 // 建立中間的連結標題 (點擊標題會導向)
                 const titleLink = document.createElement('a');
@@ -116,8 +165,8 @@
                 } else {
                     titleLink.href = '#';
                 }
-                titleLink.className = 'font-semibold text-neutral-100 group-hover:text-orange-400 transition text-center flex-grow text-sm sm:text-base';
-                titleLink.textContent = escapeHtml(link.title);
+                titleLink.className = 'font-semibold text-neutral-100 group-hover:text-orange-400 transition text-center lg:text-left flex-grow text-sm sm:text-base';
+                titleLink.textContent = link.title; // textContent 本身就安全，不需再 escape
 
                 // 建立右側的複製按鈕
                 const copyBtn = document.createElement('button');
@@ -140,6 +189,7 @@
                 };
 
                 // 組裝元素
+                container.appendChild(indexLabel);
                 container.appendChild(titleLink);
                 container.appendChild(copyBtn);
                 linksContainer.appendChild(container);
